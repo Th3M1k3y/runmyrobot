@@ -21,8 +21,11 @@ SHUNT_OHMS = 0.01
 MAX_EXPECTED_AMPS = 4
 LAST_BAT_LEVEL = 11
 
-def readVoltage():
+LAST_WIFI_LEVEL = 11
+
+def readValues():
     global LAST_BAT_LEVEL
+    global LAST_WIFI_LEVEL
 
     ina = INA219(SHUNT_OHMS, MAX_EXPECTED_AMPS)
     ina.configure(ina.RANGE_32V)
@@ -33,45 +36,34 @@ def readVoltage():
             print(bcolors.FAIL + "Low voltage, shutting down!" + bcolors.ENDC)
             subprocess.Popen("sudo shutdown -P now", shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
-        if currentVolt >= 11.26:
-            if LAST_BAT_LEVEL != 4:
-                LAST_BAT_LEVEL = 4
-                print(bcolors.OKGREEN + "Updating battery icon, level 4" + bcolors.ENDC)
-                copyfile(IMAGEDIR + "/battery_4.png", DESTDIR + "/battery.png")
-        elif currentVolt >= 10.52:
-            if LAST_BAT_LEVEL != 3:
-                LAST_BAT_LEVEL = 3
-                print(bcolors.OKGREEN + "Updating battery icon, level 3" + bcolors.ENDC)
-                copyfile(IMAGEDIR + "/battery_3.png", DESTDIR + "/battery.png")
-        elif currentVolt >= 9.78:
+        if currentVolt <= 8.3:
+            if LAST_BAT_LEVEL != 0:
+                LAST_BAT_LEVEL = 0
+                print(bcolors.OKGREEN + "Updating battery icon, level 0" + bcolors.ENDC)
+                copyfile(IMAGEDIR + "/battery_0.png", DESTDIR + "/battery.png")
+        elif currentVolt <= 9.04:
+            if LAST_BAT_LEVEL != 1:
+                LAST_BAT_LEVEL = 1
+                print(bcolors.OKGREEN + "Updating battery icon, level 1" + bcolors.ENDC)
+                copyfile(IMAGEDIR + "/battery_1.png", DESTDIR + "/battery.png")
+        elif currentVolt <= 9.78:
             if LAST_BAT_LEVEL != 2:
                 LAST_BAT_LEVEL = 2
                 print(bcolors.OKGREEN + "Updating battery icon, level 2" + bcolors.ENDC)
                 copyfile(IMAGEDIR + "/battery_2.png", DESTDIR + "/battery.png")
-        elif currentVolt >= 9.04:
-            if LAST_BAT_LEVEL != 1:
-                LAST_BAT_LEVEL = 1
-                print(bcolors.WARNING + "Updating battery icon, level 1" + bcolors.ENDC)
-                copyfile(IMAGEDIR + "/battery_1.png", DESTDIR + "/battery.png")
-        elif currentVolt >= 8.3:
-            if LAST_BAT_LEVEL != 0:
-                LAST_BAT_LEVEL = 0
-                print(bcolors.WARNING + "Updating battery icon, level 0" + bcolors.ENDC)
-                copyfile(IMAGEDIR + "/battery_0.png", DESTDIR + "/battery.png")
+        elif currentVolt <= 10.52:
+            if LAST_BAT_LEVEL != 3:
+                LAST_BAT_LEVEL = 3
+                print(bcolors.WARNING + "Updating battery icon, level 3" + bcolors.ENDC)
+                copyfile(IMAGEDIR + "/battery_3.png", DESTDIR + "/battery.png")
+        else:
+            if LAST_BAT_LEVEL != 4:
+                LAST_BAT_LEVEL = 4
+                print(bcolors.WARNING + "Updating battery icon, level 4" + bcolors.ENDC)
+                copyfile(IMAGEDIR + "/battery_4.png", DESTDIR + "/battery.png")
 
         print("Battery Voltage: %.3f V" % ina.voltage())
-        time.sleep(1)
 
-readBat = Process(target=readVoltage)
-readBat.start()
-
-
-LAST_WIFI_LEVEL = 11
-
-def readWifiStrength():
-    global LAST_WIFI_LEVEL
-
-    while True:
         wifiStrength = int(subprocess.Popen("/sbin/iwconfig wlan0 | grep Link | grep -oE -- '-[0-9]{2}'", shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT).stdout.readlines()[0].strip())
 
         if wifiStrength <= -90:
@@ -101,16 +93,8 @@ def readWifiStrength():
                 copyfile(IMAGEDIR + "/wifi_5.png", DESTDIR + "/wifi.png")
 
         print("Wifi level: %d dBm" % wifiStrength)
+        
         time.sleep(1)
 
-readWifi = Process(target=readWifiStrength)
-readWifi.start()
-
-
-def readTemperature():
-    while True:
-        cpuTemp = int(subprocess.Popen("vcgencmd measure_temp | grep -oE -- '[0-9]{2}.[0-9]'", shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT).stdout.readlines()[0].strip())
-        print("CPU temperature: %d C" % cpuTemp)
-
-readTemp = Process(target=readTemperature)
-#readTemp.start()
+readVal = Process(target=readValues)
+readVal.start()
