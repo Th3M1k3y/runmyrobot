@@ -6,3 +6,4 @@
 cd /home/pi/runmyrobot
 nohup scripts/repeat_start python controller.py YOURROBOTID &> /dev/null &
 nohup scripts/repeat_start python send_video.py YOURCAMERAID 0 &> /dev/null &
+nohup scripts/repeat_start python overlay.py &> /dev/null &
