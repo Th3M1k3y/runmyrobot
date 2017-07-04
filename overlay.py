@@ -20,11 +20,13 @@ class bcolors:
 SHUNT_OHMS = 0.01
 MAX_EXPECTED_AMPS = 4
 LAST_BAT_LEVEL = 11
+AVG_BAT_LEVEL = 0.0
 
 LAST_WIFI_LEVEL = 11
 
 def readValues():
     global LAST_BAT_LEVEL
+    global AVG_BAT_LEVEL
     global LAST_WIFI_LEVEL
 
     ina = INA219(SHUNT_OHMS, MAX_EXPECTED_AMPS)
@@ -32,26 +34,34 @@ def readValues():
 
     while True:
         currentVolt = ina.voltage()
-        if currentVolt < 8.1:
+
+        if abs(AVG_BAT_LEVEL-currentVolt) > 1.5:
+            AVG_BAT_LEVEL = currentVolt
+        else:
+            AVG_BAT_LEVEL = (AVG_BAT_LEVEL * 0.75) + (currentVolt * 0.25)
+
+        currentVolt = AVG_BAT_LEVEL
+
+        if currentVolt < 8.75:
             print(bcolors.FAIL + "Low voltage, shutting down!" + bcolors.ENDC)
             subprocess.Popen("sudo shutdown -P now", shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
-        if currentVolt <= 8.3:
+        if currentVolt <= 8.75:
             if LAST_BAT_LEVEL != 0:
                 LAST_BAT_LEVEL = 0
                 print(bcolors.OKGREEN + "Updating battery icon, level 0" + bcolors.ENDC)
                 copyfile(IMAGEDIR + "/battery_0.png", DESTDIR + "/battery.png")
-        elif currentVolt <= 9.04:
+        elif currentVolt <= 9.4:
             if LAST_BAT_LEVEL != 1:
                 LAST_BAT_LEVEL = 1
                 print(bcolors.OKGREEN + "Updating battery icon, level 1" + bcolors.ENDC)
                 copyfile(IMAGEDIR + "/battery_1.png", DESTDIR + "/battery.png")
-        elif currentVolt <= 9.78:
+        elif currentVolt <= 10.05:
             if LAST_BAT_LEVEL != 2:
                 LAST_BAT_LEVEL = 2
                 print(bcolors.OKGREEN + "Updating battery icon, level 2" + bcolors.ENDC)
                 copyfile(IMAGEDIR + "/battery_2.png", DESTDIR + "/battery.png")
-        elif currentVolt <= 10.52:
+        elif currentVolt <= 10.7:
             if LAST_BAT_LEVEL != 3:
                 LAST_BAT_LEVEL = 3
                 print(bcolors.WARNING + "Updating battery icon, level 3" + bcolors.ENDC)
@@ -62,7 +72,7 @@ def readValues():
                 print(bcolors.WARNING + "Updating battery icon, level 4" + bcolors.ENDC)
                 copyfile(IMAGEDIR + "/battery_4.png", DESTDIR + "/battery.png")
 
-        print("Battery Voltage: %.3f V" % ina.voltage())
+        print("Battery Voltage: %.2f V" % currentVolt)
 
         wifiStrength = int(subprocess.Popen("/sbin/iwconfig wlan0 | grep Link | grep -oE -- '-[0-9]{2}'", shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT).stdout.readlines()[0].strip())
 
@@ -81,7 +91,7 @@ def readValues():
                 LAST_WIFI_LEVEL = 3
                 print(bcolors.OKGREEN + "Updating wifi icon, level 3" + bcolors.ENDC)
                 copyfile(IMAGEDIR + "/wifi_3.png", DESTDIR + "/wifi.png")
-        elif wifiStrength <= -65:
+        elif wifiStrength <= -50: #-65
             if LAST_WIFI_LEVEL != 4:
                 LAST_WIFI_LEVEL = 4
                 print(bcolors.OKGREEN + "Updating wifi icon, level 4" + bcolors.ENDC)
