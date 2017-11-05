@@ -2,6 +2,7 @@ IMAGEDIR = "/home/pi/runmyrobot/overlay/"
 DESTDIR = "/dev/shm/"
 
 import time
+import datetime
 import subprocess
 import argparse
 import requests
@@ -18,6 +19,10 @@ parser.add_argument('--pushover-robot', help='Robot name, used when sending mess
 
 
 args = parser.parse_args()
+
+
+def timeNow():
+    return datetime.datetime.now().strftime("%Y/%m/%d %H:%M:%S")
 
 
 if args.batt == False and args.wifi == False:
@@ -46,6 +51,8 @@ AVG_BAT_LEVEL = 0.0
 
 LAST_WIFI_LEVEL = 11
 
+copyfile(IMAGEDIR + "/transparent.png", DESTDIR + "/fullscreen.png")
+
 if len(args.pushover_user) > 0:
     if len(args.pushover_user) != 30:
         print(bcolors.FAIL + "There is something wrong with your pushover user token, please check it again" + bcolors.ENDC)
@@ -69,48 +76,55 @@ def readValues():
         ina.configure(ina.RANGE_32V)
 
     while True:
+        print(timeNow())
         if args.batt:
             currentVolt = ina.voltage()
+            currentCurrent = ina.current()
+            currentPower = ina.power()
 
-            if abs(AVG_BAT_LEVEL-currentVolt) > 1.5:
+            if abs(AVG_BAT_LEVEL-currentVolt) > 1.0:
                 AVG_BAT_LEVEL = currentVolt
             else:
-                AVG_BAT_LEVEL = (AVG_BAT_LEVEL * 0.75) + (currentVolt * 0.25)
+                AVG_BAT_LEVEL = (AVG_BAT_LEVEL * 0.85) + (currentVolt * 0.15)
 
             currentVolt = AVG_BAT_LEVEL
 
-            if currentVolt < 8.75:
-                print(bcolors.FAIL + "Low voltage, shutting down!" + bcolors.ENDC)
+            if currentVolt <= 10.0:
+                copyfile(IMAGEDIR + "/battery_off.png", DESTDIR + "/fullscreen.png")
+                copyfile(IMAGEDIR + "/transparent.png", DESTDIR + "/battery.png")
+                copyfile(IMAGEDIR + "/transparent.png", DESTDIR + "/wifi.png")
+                time.sleep(1)
+                print(bcolors.FAIL + "\tLow voltage, shutting down!" + bcolors.ENDC)
                 sendPushmessage("Battery low, shutting down\n%.2fV" % currentVolt)
                 subprocess.Popen("sudo shutdown -P now", shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
-            if currentVolt <= 8.75:
+            if currentVolt <= 10.3:
                 if LAST_BAT_LEVEL != 0:
                     LAST_BAT_LEVEL = 0
-                    print(bcolors.OKGREEN + "Updating battery icon, level 0 (0%)" + bcolors.ENDC)
+                    print(bcolors.FAIL + "\tUpdating battery icon, level 0 (0%)" + bcolors.ENDC)
                     copyfile(IMAGEDIR + "/battery_0.png", DESTDIR + "/battery.png")
-            elif currentVolt <= 9.4:
+            elif currentVolt <= 10.7:
                 if LAST_BAT_LEVEL != 1:
                     LAST_BAT_LEVEL = 1
-                    print(bcolors.OKGREEN + "Updating battery icon, level 1 (25%)" + bcolors.ENDC)
+                    print(bcolors.WARNING + "\tUpdating battery icon, level 1 (25%)" + bcolors.ENDC)
                     copyfile(IMAGEDIR + "/battery_1.png", DESTDIR + "/battery.png")
-            elif currentVolt <= 10.35:
+            elif currentVolt <= 11.0:
                 if LAST_BAT_LEVEL != 2:
                     LAST_BAT_LEVEL = 2
-                    print(bcolors.OKGREEN + "Updating battery icon, level 2 (50%)" + bcolors.ENDC)
+                    print(bcolors.OKGREEN + "\tUpdating battery icon, level 2 (50%)" + bcolors.ENDC)
                     copyfile(IMAGEDIR + "/battery_2.png", DESTDIR + "/battery.png")
-            elif currentVolt <= 10.9:
+            elif currentVolt <= 11.7:
                 if LAST_BAT_LEVEL != 3:
                     LAST_BAT_LEVEL = 3
-                    print(bcolors.WARNING + "Updating battery icon, level 3 (75%)" + bcolors.ENDC)
+                    print(bcolors.OKGREEN + "\tUpdating battery icon, level 3 (75%)" + bcolors.ENDC)
                     copyfile(IMAGEDIR + "/battery_3.png", DESTDIR + "/battery.png")
             else:
                 if LAST_BAT_LEVEL != 4:
                     LAST_BAT_LEVEL = 4
-                    print(bcolors.WARNING + "Updating battery icon, level 4 (100%)" + bcolors.ENDC)
+                    print(bcolors.OKGREEN + "\tUpdating battery icon, level 4 (100%)" + bcolors.ENDC)
                     copyfile(IMAGEDIR + "/battery_4.png", DESTDIR + "/battery.png")
 
-            print("Battery Voltage: %.2f V" % currentVolt)
+            print("\tBattery Voltage: %.2fv" % currentVolt)
 
         if args.wifi:
             wifiStrength = int(subprocess.Popen("/sbin/iwconfig wlan0 | grep Link | grep -oE -- '-[0-9]{2}'", shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT).stdout.readlines()[0].strip())
@@ -118,30 +132,30 @@ def readValues():
             if wifiStrength <= -90:
                 if LAST_WIFI_LEVEL != 1:
                     LAST_WIFI_LEVEL = 1
-                    print(bcolors.OKGREEN + "Updating wifi icon, level 1" + bcolors.ENDC)
+                    print(bcolors.OKGREEN + "\tUpdating wifi icon, level 1" + bcolors.ENDC)
                     copyfile(IMAGEDIR + "/wifi_1.png", DESTDIR + "/wifi.png")
             elif wifiStrength <= -80:
                 if LAST_WIFI_LEVEL != 2:
                     LAST_WIFI_LEVEL = 2
-                    print(bcolors.OKGREEN + "Updating wifi icon, level 2" + bcolors.ENDC)
+                    print(bcolors.OKGREEN + "\tUpdating wifi icon, level 2" + bcolors.ENDC)
                     copyfile(IMAGEDIR + "/wifi_2.png", DESTDIR + "/wifi.png")
             elif wifiStrength <= -70:
                 if LAST_WIFI_LEVEL != 3:
                     LAST_WIFI_LEVEL = 3
-                    print(bcolors.OKGREEN + "Updating wifi icon, level 3" + bcolors.ENDC)
+                    print(bcolors.OKGREEN + "\tUpdating wifi icon, level 3" + bcolors.ENDC)
                     copyfile(IMAGEDIR + "/wifi_3.png", DESTDIR + "/wifi.png")
             elif wifiStrength <= -50: #-65
                 if LAST_WIFI_LEVEL != 4:
                     LAST_WIFI_LEVEL = 4
-                    print(bcolors.OKGREEN + "Updating wifi icon, level 4" + bcolors.ENDC)
+                    print(bcolors.OKGREEN + "\tUpdating wifi icon, level 4" + bcolors.ENDC)
                     copyfile(IMAGEDIR + "/wifi_4.png", DESTDIR + "/wifi.png")
             else:
                 if LAST_WIFI_LEVEL != 5:
                     LAST_WIFI_LEVEL = 5
-                    print(bcolors.OKGREEN + "Updating wifi icon, level 5" + bcolors.ENDC)
+                    print(bcolors.OKGREEN + "\tUpdating wifi icon, level 5" + bcolors.ENDC)
                     copyfile(IMAGEDIR + "/wifi_5.png", DESTDIR + "/wifi.png")
 
-            print("Wifi level: %d dBm" % wifiStrength)
+            print("\tWifi level:\t %d dBm" % wifiStrength)
         
         time.sleep(1)
 
