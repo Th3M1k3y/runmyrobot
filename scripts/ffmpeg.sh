@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # This script will remove the stock version of FFMpeg, and replace it with one with the overlay filter on from r3n33
+# Run it by simply putting 'sudo wget https://raw.githubusercontent.com/Th3M1k3y/runmyrobot/master/scripts/ffmpeg.sh -O /tmp/install.sh && bash /tmp/install.sh' into the terminal
 
 # Clear screen
 printf "\ec"
