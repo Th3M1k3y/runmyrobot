@@ -9,15 +9,15 @@ $authToken = "";
 $robotID = 0;
 
 //-- Toggle between true/false
-$public 				= "true";
-$anonymous_control 		= "false";
-$profanity_filter 		= "true";
-$global_chat 			= "false";
-$show_exclusive 		= "false";
-$mute_text_to_speech 	= "false";
-$mic_enabled 			= "true";
-$dev_mode 				= "true";
-$custom_panels 			= "true";
+$public = "true";
+$anonymous_control = "false";
+$profanity_filter = "true";
+$global_chat = "false";
+$show_exclusive = "false";
+$mute_text_to_speech = "false";
+$mic_enabled = "true";
+$dev_mode = "true";
+$custom_panels = "true";
 
 //-- JSON for custom panels
 $panels = '[]';
