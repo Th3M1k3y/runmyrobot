@@ -1,7 +1,5 @@
 <pre>
 <?php
-$ch = curl_init();
-
 //-- Auth token, do not share with anyone!
 $authToken = "";
 
@@ -17,7 +15,7 @@ $show_exclusive = "false";
 $mute_text_to_speech = "false";
 $mic_enabled = "true";
 $dev_mode = "true";
-$custom_panels = "true";
+$custom_panels 	= "true";
 
 //-- JSON for custom panels
 $panels = '[]';
@@ -29,6 +27,7 @@ $panels = str_replace("\"", "\\\"", $panels);
 $post_output = '{"public": ' . $public . ', "anonymous_control": ' . $anonymous_control . ', "profanity_filter": ' . $profanity_filter . ', "global_chat": ' . $global_chat . ', "show_exclusive": ' . $show_exclusive . ', "mute_text-to-speech": ' . $mute_text_to_speech . ', "mic_enabled": ' . $mic_enabled . ', "dev_mode": ' . $dev_mode . ', "custom_panels": ' . $custom_panels . ', "panels": "' . $panels . '"}';
 
 //-- Do iiiiit
+$ch = curl_init();
 curl_setopt($ch, CURLOPT_URL,"https://api.letsrobot.tv/api/v1/robots/" . $robotID);
 curl_setopt($ch, CURLOPT_POST, 1);
 curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/json', 'Authorization: Bearer ' . $authToken));
