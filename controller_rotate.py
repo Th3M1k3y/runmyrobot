@@ -70,6 +70,7 @@ secondsToCharge = 60.0 * 60.0 * commandArgs.charge_hours
 secondsToDischarge = 60.0 * 60.0 * commandArgs.discharge_hours
 
 onlyRotate = 0
+botOwner = "jill"
 
 maxSpeedEnabled = False
 
@@ -672,9 +673,11 @@ def handle_chat_message(args):
     message = "".join(withoutName)
     urlRegExp = "(http|ftp|https)://([\w_-]+(?:(?:\.[\w_-]+)+))([\w.,@?^=%&:/~+#-]*[\w@?^=%&/~+#-])?"
     if message[0:2] != '.s':
-        onlyRotate = 1
+        if args['name'] == botOwner:
+            onlyRotate = 1
     if message[0:3] != '.ns':
-        onlyRotate = 0
+        if args['name'] == botOwner:
+            onlyRotate = 0
     if message[1] == ".":
        exit()
     elif commandArgs.anon_tts != True and args['anonymous'] == True:
